@@ -65,8 +65,8 @@ while run:
         # after .5 seconds, cut the speed in half
         if ((SPEED_RIGHT != 0 or SPEED_LEFT != 0) and diff.microseconds > 500000):
 
-            SPEED_RIGHT = 0 if SPEED_RIGHT == -1 else SPEED_RIGHT/2
-            SPEED_LEFT = 0 if SPEED_LEFT == -1 else SPEED_LEFT/2
+            SPEED_RIGHT = 0 if abs(SPEED_RIGHT) < 1 else SPEED_RIGHT/2
+            SPEED_LEFT = 0 if abs(SPEED_LEFT) < 1 else SPEED_LEFT/2
             LAST_COMMAND_TIME = datetime.datetime.now()
 
     # TODO: send speeds to the motors -- please be careful when testing this!!!!!!
