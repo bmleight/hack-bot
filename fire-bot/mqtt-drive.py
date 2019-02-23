@@ -3,77 +3,47 @@
 import paho.mqtt.client as mqtt
 import catapult
 import roboclaw
-import time
+import datetime
 import json
 
 PORT="/dev/serial/by-id/usb-Silicon_Labs_CP2102_USB_to_UART_Bridge_Controller_0001-if00-port0"
 robot = roboclaw.Controller(PORT)
-#robot.M1Forward(speed)
 
-SPEED_RIGHT = SPEED_LEFT = 0
+SPEED_RIGHT = 0
+SPEED_LEFT = 0
+SPEED_RIGHT_LAST = 0
+SPEED_LEFT_LAST = 0
 
-# The callback for when the client receives a CONNACK response from the server.
+LAST_COMMAND_TIME = datetime.datetime.now()
+
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
-    print("is it working???!")
-
-    # Subscribing in on_connect() means that if we lose the connection and
-    # reconnect then subscriptions will be renewed.
-    #client.subscribe([("hackbot/forward", 0), ("hackbot/backward", 0), ("hackbot/fire", 0), ("hackbot/left", 0), ("hackbot/right", 0), ("kegbot", 0), ("hackbot/drive", 0)])
-    #client.subscribe([("hackbot/forward", 0), ("hackbot/backward", 0), ("hackbot/fire", 0), ("hackbot/left", 0), ("hackbot/right", 0), ("kegbot", 0)])
     client.subscribe([("hackbot/drive", 0), ("hackbot/fire", 0)])
-
-
-### this should just store the command somewhere.  Need to eliminate the the sleep, and not block any processing stuff, and not keep executing commands if the connection dies
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    if msg.topic == "hackbot/forward":
-        print("Forward")
-        robot.M1Backward(20)
-        robot.M2Backward(20)
-        time.sleep(1)
-        robot.M1Forward(0)
-        robot.M2Forward(0)
-        client.publish("hackbot/done", 'forward')
-    elif msg.topic == "hackbot/backward":
-        print("Backward")
-        robot.M1Forward(20)
-        robot.M2Forward(20)
-        time.sleep(1)
-        robot.M1Forward(0)
-        robot.M2Forward(0)
-        client.publish("hackbot/done", 'backward')
-    elif msg.topic == "hackbot/left":
-        print("left")
-        robot.M1Forward(20)
-        robot.M2Backward(20)
-        time.sleep(1)
-        robot.M1Forward(0)
-        robot.M2Forward(0)
-        client.publish("hackbot/done", 'left')
-    elif msg.topic == "hackbot/right":
-        print("right")
-        robot.M1Backward(20)
-        robot.M2Forward(20)
-        time.sleep(1)
-        robot.M1Forward(0)
-        robot.M2Forward(0)
-        client.publish("hackbot/done", 'right')
-    elif msg.topic == "hackbot/fire":
-        print("FIRE")
+    
+    global SPEED_RIGHT, SPEED_LEFT, LAST_COMMAND_TIME
+    
+    #print('on message ' + msg.topic);
+    if msg.topic == "hackbot/fire":
+
         c.fire()
-        client.publish("hackbot/done", 'fire')
+
     elif msg.topic == "hackbot/drive":
-        print("drive")
-        print(str(msg.payload))
-        print(type(msg.payload))
-        client.publish("hackbot/done", 'drive')
-        decodedData = json.loads(str(msg.payload))
-        print(str(decodedData))
-        print(str(decodedData.left))
-        
-    print(msg.topic+" "+str(msg.payload))
+
+        LAST_COMMAND_TIME = datetime.datetime.now()
+
+        try:
+            decodedData = json.loads(str(msg.payload)[2:-1])
+        except ValueError as e:
+            print("error?!?! ")
+            print(e)
+
+        #SPEED_RIGHT = int(decodedData['right']/3)
+        #SPEED_LEFT = int(decodedData['left']/3)
+        SPEED_RIGHT = int(decodedData['right'])
+        SPEED_LEFT = int(decodedData['left'])
 
 c=catapult.Catapult()
 
@@ -81,19 +51,40 @@ client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
 
-#client.connect("192.168.1.158", 1883, 60)
-client.connect("iot.eclipse.org", 1883, 60)
+client.connect("192.168.2.138", 1883, 60)
+#client.connect("iot.eclipse.org", 1883, 60)
 #client.connect("kegbot.local", 1883, 60)
 
-# Blocking call that processes network traffic, dispatches callbacks and
-# handles reconnecting.
-# Other loop*() functions are available that give a threaded interface and a
-# manual interface.
-#client.loop_forever()
+client.loop_start()
 
 run = True
 while run:
-    client.loop()
-    # print("looping")
-    #print(SPEED_LEFT)
-    #print(SPEED_RIGHT)
+
+    #print("motor speeds: " + str(SPEED_RIGHT) + " " + str(SPEED_LEFT))
+
+    # TODO: if wheels are moving and the timestamp of last command is greater than X seconds, start to decrease speed
+    cur_time = datetime.datetime.now()
+
+    #if (LAST_COMMAND_TIME):
+    #    diff = cur_time - LAST_COMMAND_TIME
+
+         # after .5 seconds, cut the speed in half
+    #    if ((SPEED_RIGHT != 0 or SPEED_LEFT != 0) and diff.microseconds > 500000):
+
+    #        SPEED_RIGHT = 0 if abs(SPEED_RIGHT) < 1 else int(SPEED_RIGHT/2)
+    #        SPEED_LEFT = 0 if abs(SPEED_LEFT) < 1 else int(SPEED_LEFT/2)
+    #        LAST_COMMAND_TIME = datetime.datetime.now()
+
+    if (SPEED_LEFT_LAST != SPEED_LEFT):
+        SPEED_LEFT_LAST = SPEED_LEFT
+        if (SPEED_LEFT >= 0):
+            robot.M1Forward(int(SPEED_LEFT))
+        else:
+            robot.M1Backward(int(SPEED_LEFT*-1))
+
+    if (SPEED_RIGHT_LAST != SPEED_RIGHT):
+        SPEED_RIGHT_LAST = SPEED_RIGHT
+        if (SPEED_RIGHT >= 0):
+            robot.M2Forward(int(SPEED_RIGHT))
+        else:
+            robot.M2Backward(int(SPEED_RIGHT*-1))
