@@ -14,7 +14,7 @@ SPEED_LEFT = 0
 SPEED_RIGHT_LAST = 0
 SPEED_LEFT_LAST = 0
 
-LAST_COMMAND_TIME = datetime.datetime.now()
+LAST_COMMAND_TIME = LAST_STATUS_SENT_TIME = datetime.datetime.now()
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
@@ -51,7 +51,7 @@ client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
 
-client.connect("192.168.2.138", 1883, 60)
+client.connect("192.168.2.128", 1883, 60)
 #client.connect("iot.eclipse.org", 1883, 60)
 #client.connect("kegbot.local", 1883, 60)
 
@@ -74,6 +74,13 @@ while run:
     #        SPEED_RIGHT = 0 if abs(SPEED_RIGHT) < 1 else int(SPEED_RIGHT/2)
     #        SPEED_LEFT = 0 if abs(SPEED_LEFT) < 1 else int(SPEED_LEFT/2)
     #        LAST_COMMAND_TIME = datetime.datetime.now()
+
+    statusDiff = cur_time - LAST_STATUS_SENT_TIME
+
+    if (statusDiff.seconds > 10):
+        client.publish("hackbot/status", json.dumps({"battery": robot.readmainbattery()}, sort_keys=True));
+        LAST_STATUS_SENT_TIME = datetime.datetime.now()
+
 
     if (SPEED_LEFT_LAST != SPEED_LEFT):
         SPEED_LEFT_LAST = SPEED_LEFT
