@@ -17,7 +17,7 @@ LAST_COMMAND_TIME = LAST_STATUS_SENT_TIME = datetime.datetime.now()
 
 def on_connect(client, userdata, flags, rc):
     print("Connected with result code "+str(rc))
-    client.subscribe([("hackbot/drive", 0), ("hackbot/fire", 0)])
+    client.subscribe([("hackbot/drive", 0)])
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
@@ -25,11 +25,7 @@ def on_message(client, userdata, msg):
     global SPEED_RIGHT, SPEED_LEFT, LAST_COMMAND_TIME
     
     #print('on message ' + msg.topic);
-    if msg.topic == "hackbot/fire":
-
-        c.fire()
-
-    elif msg.topic == "hackbot/drive":
+    if msg.topic == "hackbot/drive":
 
         LAST_COMMAND_TIME = datetime.datetime.now()
 
@@ -39,8 +35,6 @@ def on_message(client, userdata, msg):
             print("error?!?! ")
             print(e)
 
-        #SPEED_RIGHT = int(decodedData['right']/3)
-        #SPEED_LEFT = int(decodedData['left']/3)
         SPEED_RIGHT = int(decodedData['right'])
         SPEED_LEFT = int(decodedData['left'])
 
