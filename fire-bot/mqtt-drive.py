@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
 import paho.mqtt.client as mqtt
-import catapult
 import roboclaw
 import datetime
 import json
@@ -44,8 +43,6 @@ def on_message(client, userdata, msg):
         #SPEED_LEFT = int(decodedData['left']/3)
         SPEED_RIGHT = int(decodedData['right'])
         SPEED_LEFT = int(decodedData['left'])
-
-c=catapult.Catapult()
 
 client = mqtt.Client()
 client.on_connect = on_connect
