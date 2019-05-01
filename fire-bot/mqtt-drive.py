@@ -42,7 +42,8 @@ client = mqtt.Client()
 client.on_connect = on_connect
 client.on_message = on_message
 
-client.connect("192.168.2.128", 1883, 60)
+client.connect("hackbot-mqtt.local", 1883, 60)
+#client.connect("192.168.2.128", 1883, 60)
 #client.connect("iot.eclipse.org", 1883, 60)
 #client.connect("kegbot.local", 1883, 60)
 
