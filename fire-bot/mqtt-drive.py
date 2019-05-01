@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 
+import time
 import paho.mqtt.client as mqtt
 import roboclaw
 import datetime
@@ -57,15 +58,16 @@ while run:
     # TODO: if wheels are moving and the timestamp of last command is greater than X seconds, start to decrease speed
     cur_time = datetime.datetime.now()
 
-    #if (LAST_COMMAND_TIME):
-    #    diff = cur_time - LAST_COMMAND_TIME
+    if (LAST_COMMAND_TIME):
+        diff = cur_time - LAST_COMMAND_TIME
 
-         # after .5 seconds, cut the speed in half
-    #    if ((SPEED_RIGHT != 0 or SPEED_LEFT != 0) and diff.microseconds > 500000):
+        # after .5 seconds, cut the speed in half
+        if ((SPEED_RIGHT != 0 or SPEED_LEFT != 0) and diff.microseconds > 500000):
 
-    #        SPEED_RIGHT = 0 if abs(SPEED_RIGHT) < 1 else int(SPEED_RIGHT/2)
-    #        SPEED_LEFT = 0 if abs(SPEED_LEFT) < 1 else int(SPEED_LEFT/2)
-    #        LAST_COMMAND_TIME = datetime.datetime.now()
+            SPEED_RIGHT = 0 if abs(SPEED_RIGHT) < 1 else int(SPEED_RIGHT/2)
+            SPEED_LEFT = 0 if abs(SPEED_LEFT) < 1 else int(SPEED_LEFT/2)
+            LAST_COMMAND_TIME = datetime.datetime.now()
+
 
     statusDiff = cur_time - LAST_STATUS_SENT_TIME
 
@@ -87,3 +89,5 @@ while run:
             robot.M2Forward(int(SPEED_RIGHT))
         else:
             robot.M2Backward(int(SPEED_RIGHT*-1))
+
+    time.sleep(.01)
